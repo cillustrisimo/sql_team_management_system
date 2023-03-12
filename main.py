@@ -1,6 +1,8 @@
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QComboBox
 from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt
+
 import sys
 import sqlite3
 
@@ -109,9 +111,25 @@ class Query(QDialog):
         self.search_bar.setPlaceholderText("Enter name of member")
         layout.addWidget(self.search_bar)
 
-        self.search_button = QPushButton("Search")
-        layout.addWidget(self.search_button)
+        search_button = QPushButton("Search")
+        search_button.clicked.connect(self.search)
+        layout.addWidget(search_button)
         self.setLayout(layout)
+
+    def search(self):
+        name = self.search_bar.text()
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM members WHERE name = ?", (name, ))
+        rows = list(result)
+        print(rows)
+        items = team_manager.table.findItems(name, Qt.MatchFlag.MatchFixedString)
+        for item in items:
+            print(item)
+            team_manager.table.item(item.row(), 1).setSelected(True)
+
+        cursor.close()
+        connection.close()
 
 
 app = QApplication(sys.argv)
