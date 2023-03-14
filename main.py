@@ -1,11 +1,20 @@
-from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QStatusBar, \
+from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QStatusBar, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QComboBox, \
     QToolBar, QGridLayout, QMessageBox
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
-
 import sys
 import sqlite3
+import qdarktheme
+
+
+class DatabaseConnection:
+    def __init__(self, database_file="database.db"):
+        self.database_file = database_file
+
+    def connect(self):
+        connection = sqlite3.connect(self.database_file)
+        return connection
 
 
 class MainWindow(QMainWindow):
@@ -74,7 +83,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def load_data(self):
-        connection = sqlite3.connect("database.db")
+        connection = DatabaseConnection().connect()
         result = connection.execute("SELECT * FROM members")
         self.table.setRowCount(0)
         for row_number, row_data in enumerate(result):
@@ -141,7 +150,7 @@ class EditDialog(QDialog):
         self.setLayout(layout)
 
     def update(self):
-        connection = sqlite3.connect("database.db")
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         cursor.execute("UPDATE members SET name = ?, team = ?, email = ?, phone = ? WHERE id = ?",
                        (self.member_name.text(), self.team_name.itemText(self.team_name.currentIndex()),
@@ -179,7 +188,7 @@ class DeleteDialog(QDialog):
     def delete_member(self):
         index = team_manager.table.currentRow()
         member_id = team_manager.table.item(index, 0).text()
-        connection = sqlite3.connect("database.db")
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         cursor.execute("DELETE from members WHERE id = ?", (member_id, ))
         connection.commit()
@@ -230,7 +239,7 @@ class InsertDialog(QDialog):
         team = self.team_name.itemText(self.team_name.currentIndex())
         email = self.email.text()
         phone = self.phone.text()
-        connection = sqlite3.connect("database.db")
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         cursor.execute("INSERT INTO members (name, team, email, phone) VALUES (?, ?, ?, ?)",
                        (name, team, email, phone))
@@ -238,6 +247,13 @@ class InsertDialog(QDialog):
         cursor.close()
         connection.close()
         team_manager.load_data()
+
+        self.close()
+
+        confirmation_widget = QMessageBox()
+        confirmation_widget.setWindowTitle("Success")
+        confirmation_widget.setText("Member successfully added!")
+        confirmation_widget.exec()
 
 
 class Query(QDialog):
@@ -260,7 +276,7 @@ class Query(QDialog):
 
     def search(self):
         name = self.search_bar.text()
-        connection = sqlite3.connect("database.db")
+        connection = DatabaseConnection().connect()
         cursor = connection.cursor()
         result = cursor.execute("SELECT * FROM members WHERE name = ?", (name, ))
         rows = list(result)
@@ -275,6 +291,7 @@ class Query(QDialog):
 
 
 app = QApplication(sys.argv)
+qdarktheme.setup_theme()
 team_manager = MainWindow()
 team_manager.show()
 team_manager.load_data()
