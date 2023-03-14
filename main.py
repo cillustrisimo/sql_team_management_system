@@ -22,6 +22,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(add_member_action)
 
         about_action = QAction(QIcon("icons/about.png"), "About", self)
+        about_action.triggered.connect(self.about)
         help_menu.addAction(about_action)
 
         search_action = QAction(QIcon("icons/search.png"), "Search", self)
@@ -68,6 +69,10 @@ class MainWindow(QMainWindow):
         dialog = DeleteDialog()
         dialog.exec()
 
+    def about(self):
+        dialog = AboutDialog()
+        dialog.exec()
+
     def load_data(self):
         connection = sqlite3.connect("database.db")
         result = connection.execute("SELECT * FROM members")
@@ -85,6 +90,14 @@ class MainWindow(QMainWindow):
     def search(self):
         query = Query()
         query.exec()
+
+
+class AboutDialog(QMessageBox):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("About")
+        content = """This app was created during a self study course to practice my skills with object oriented programming and SQLite. Thanks for your interest!"""
+        self.setText(content)
 
 
 class EditDialog(QDialog):
