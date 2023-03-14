@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QStatusBar, \
-    QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QComboBox, QToolBar
+    QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QComboBox, \
+    QToolBar, QGridLayout, QMessageBox
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 
@@ -49,7 +50,7 @@ class MainWindow(QMainWindow):
         edit_button.clicked.connect(self.edit)
 
         delete_button = QPushButton("Delete")
-        edit_button.clicked.connect(self.delete)
+        delete_button.clicked.connect(self.delete)
 
         children = self.findChildren(QPushButton)
         if children:
@@ -137,10 +138,48 @@ class EditDialog(QDialog):
         connection.close()
         team_manager.load_data()
 
+        self.close()
+
+        confirmation_widget = QMessageBox()
+        confirmation_widget.setWindowTitle("Success")
+        confirmation_widget.setText("The record was successfully edited!")
+        confirmation_widget.exec()
+
 
 class DeleteDialog(QDialog):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Delete Team Member Data")
 
+        layout = QGridLayout()
+        confirmation = QLabel("Are you sure you want to delete this data?")
+        yes = QPushButton("Yes")
+        no = QPushButton("No")
+
+        layout.addWidget(confirmation, 0, 0, 1, 2)
+        layout.addWidget(yes, 1, 0)
+        layout.addWidget(no, 1, 1)
+        self.setLayout(layout)
+
+        yes.clicked.connect(self.delete_member)
+
+    def delete_member(self):
+        index = team_manager.table.currentRow()
+        member_id = team_manager.table.item(index, 0).text()
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("DELETE from members WHERE id = ?", (member_id, ))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        team_manager.load_data()
+
+        self.close()
+
+        confirmation_widget = QMessageBox()
+        confirmation_widget.setWindowTitle("Success")
+        confirmation_widget.setText("The record was successfully deleted!")
+        confirmation_widget.exec()
 
 class InsertDialog(QDialog):
     def __init__(self):
