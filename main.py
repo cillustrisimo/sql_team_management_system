@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
-    QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QComboBox
-from PyQt6.QtGui import QAction
+    QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QComboBox, QToolBar
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 
 import sys
@@ -11,19 +11,19 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Team Management System")
-
+        self.setMinimumSize(500, 300)
         file_menu = self.menuBar().addMenu("&File")
         help_menu = self.menuBar().addMenu("&Help")
         edit_menu = self.menuBar().addMenu("&Edit")
 
-        add_member_action = QAction("Add member", self)
+        add_member_action = QAction(QIcon("icons/add.png"), "Add Member", self)
         add_member_action.triggered.connect(self.insert)
         file_menu.addAction(add_member_action)
 
-        about_action = QAction("About", self)
+        about_action = QAction(QIcon("icons/about.png"), "About", self)
         help_menu.addAction(about_action)
 
-        search_action = QAction("Search", self)
+        search_action = QAction(QIcon("icons/search.png"), "Search", self)
         search_action.triggered.connect(self.search)
         edit_menu.addAction(search_action)
 
@@ -32,6 +32,12 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(("Id", "Name", "Team", "Email", "Phone"))
         self.table.verticalHeader().setVisible(False)
         self.setCentralWidget(self.table)
+
+        toolbar = QToolBar()
+        toolbar.setMovable(True)
+        self.addToolBar(toolbar)
+        toolbar.addAction(add_member_action)
+        toolbar.addAction(search_action)
 
     def load_data(self):
         connection = sqlite3.connect("database.db")
