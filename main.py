@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
+from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QStatusBar, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QComboBox, QToolBar
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
@@ -39,6 +39,34 @@ class MainWindow(QMainWindow):
         toolbar.addAction(add_member_action)
         toolbar.addAction(search_action)
 
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        self.table.cellClicked.connect(self.cell_clicked)
+
+    def cell_clicked(self):
+        edit_button = QPushButton("Edit")
+        edit_button.clicked.connect(self.edit)
+
+        delete_button = QPushButton("Delete")
+        edit_button.clicked.connect(self.delete)
+
+        children = self.findChildren(QPushButton)
+        if children:
+            for child in children:
+                self.status_bar.removeWidget(child)
+
+        self.status_bar.addWidget(edit_button)
+        self.status_bar.addWidget(delete_button)
+
+    def edit(self):
+        dialog = EditDialog()
+        dialog.exec()
+
+    def delete(self):
+        dialog = DeleteDialog()
+        dialog.exec()
+
     def load_data(self):
         connection = sqlite3.connect("database.db")
         result = connection.execute("SELECT * FROM members")
@@ -56,6 +84,62 @@ class MainWindow(QMainWindow):
     def search(self):
         query = Query()
         query.exec()
+
+
+class EditDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Insert Team Member Data")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+
+        layout = QVBoxLayout()
+
+        index = team_manager.table.currentRow()
+
+        self.member_id = team_manager.table.item(index, 0).text()
+
+        c_member_name = team_manager.table.item(index, 1).text()
+        self.member_name = QLineEdit(c_member_name)
+        self.member_name.setPlaceholderText("Name")
+        layout.addWidget(self.member_name)
+
+        c_team_name = team_manager.table.item(index, 2).text()
+        self.team_name = QComboBox()
+        teams = ["HR", "Marketing", "Sales", "IT", "Engineering"]
+        self.team_name.addItems(teams)
+        self.team_name.setCurrentText(c_team_name)
+        layout.addWidget(self.team_name)
+
+        c_email = team_manager.table.item(index, 3).text()
+        self.email = QLineEdit(c_email)
+        self.email.setPlaceholderText("Email")
+        layout.addWidget(self.email)
+
+        c_phone = team_manager.table.item(index, 4).text()
+        self.phone = QLineEdit(c_phone)
+        self.phone.setPlaceholderText("Phone")
+        layout.addWidget(self.phone)
+
+        submit_button = QPushButton("Submit")
+        submit_button.clicked.connect(self.update)
+        layout.addWidget(submit_button)
+        self.setLayout(layout)
+
+    def update(self):
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("UPDATE members SET name = ?, team = ?, email = ?, phone = ? WHERE id = ?",
+                       (self.member_name.text(), self.team_name.itemText(self.team_name.currentIndex()),
+                        self.email.text(), self.phone.text(), self.member_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        team_manager.load_data()
+
+
+class DeleteDialog(QDialog):
+    pass
 
 
 class InsertDialog(QDialog):
